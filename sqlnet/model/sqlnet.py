@@ -142,7 +142,7 @@ class SQLNet(nn.Module):
         # Evaluate select number
         # sel_num_truth = map(lambda x:x[0], truth_num)
         sel_num_truth = [x[0] for x in truth_num]
-        sel_num_truth = torch.from_numpy(np.array(sel_num_truth))
+        sel_num_truth = torch.from_numpy(np.array(sel_num_truth)).long()
         if self.gpu:
             sel_num_truth = Variable(sel_num_truth.cuda())
         else:
@@ -169,7 +169,7 @@ class SQLNet(nn.Module):
 
         # Evaluate select aggregation
         for b in range(len(truth_num)):
-            data = torch.from_numpy(np.array(truth_num[b][2]))
+            data = torch.from_numpy(np.array(truth_num[b][2])).long()
             if self.gpu:
                 sel_agg_truth_var = Variable(data.cuda())
             else:
@@ -182,7 +182,7 @@ class SQLNet(nn.Module):
         # Evaluate the number of conditions
         # cond_num_truth = map(lambda x:x[3], truth_num)
         cond_num_truth = [x[3] for x in truth_num]
-        data = torch.from_numpy(np.array(cond_num_truth))
+        data = torch.from_numpy(np.array(cond_num_truth)).long()
         if self.gpu:
             try:
                 cond_num_truth_var = Variable(data.cuda())
@@ -223,12 +223,13 @@ class SQLNet(nn.Module):
             else:
                 cond_op_truth_var = Variable(data)
             cond_op_pred = cond_op_score[b, :len(truth_num[b][5])]
-            try:
-                loss += (self.CE(cond_op_pred, cond_op_truth_var) / len(truth_num))
-            except:
-                print (cond_op_pred)
-                print (cond_op_truth_var)
-                exit(0)
+            loss += (self.CE(cond_op_pred, cond_op_truth_var.long()) / len(truth_num))
+            # try:
+            #     loss += (self.CE(cond_op_pred, cond_op_truth_var) / len(truth_num))
+            # except:
+            #     print (cond_op_pred)
+            #     print (cond_op_truth_var)
+            #     exit(0)
 
         #Evaluate the strings of conditions
         for b in range(len(gt_where)):
@@ -243,7 +244,7 @@ class SQLNet(nn.Module):
                     cond_str_truth_var = Variable(data)
                 str_end = len(cond_str_truth)-1
                 cond_str_pred = cond_str_score[b, idx, :str_end]
-                loss += (self.CE(cond_str_pred, cond_str_truth_var) \
+                loss += (self.CE(cond_str_pred, cond_str_truth_var.long()) \
                         / (len(gt_where) * len(gt_where[b])))
 
         # Evaluate condition relationship, and / or
@@ -259,7 +260,7 @@ class SQLNet(nn.Module):
                 exit(0)
         else:
             where_rela_truth = Variable(data)
-        loss += self.CE(where_rela_score, where_rela_truth)
+        loss += self.CE(where_rela_score, where_rela_truth.long())
         return loss
 
     def check_acc(self, vis_info, pred_queries, gt_queries):
@@ -396,16 +397,16 @@ class SQLNet(nn.Module):
             # find the most-probable columns' indexes
             max_agg_idxes = np.argsort(-agg_score[b])[:sel_num]
             cur_query['sel'].extend([int(i) for i in max_col_idxes])
-            cur_query['agg'].extend([i[0] for i in max_agg_idxes])
-            cur_query['cond_conn_op'] = np.argmax(where_rela_score[b])
+            cur_query['agg'].extend([int(i[0]) for i in max_agg_idxes])
+            cur_query['cond_conn_op'] = int(np.argmax(where_rela_score[b]))
             cur_query['conds'] = []
             cond_num = np.argmax(cond_num_score[b])
             all_toks = ['<BEG>'] + q[b] + ['<END>']
             max_idxes = np.argsort(-cond_col_score[b])[:cond_num]
             for idx in range(cond_num):
                 cur_cond = []
-                cur_cond.append(max_idxes[idx]) # where-col
-                cur_cond.append(np.argmax(cond_op_score[b][idx])) # where-op
+                cur_cond.append(int(max_idxes[idx])) # where-col
+                cur_cond.append(int(np.argmax(cond_op_score[b][idx]))) # where-op
                 cur_cond_str_toks = []
                 for str_score in cond_str_score[b][idx]:
                     str_tok = np.argmax(str_score[:len(all_toks)])

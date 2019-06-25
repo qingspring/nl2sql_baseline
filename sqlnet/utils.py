@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import json
 from sqlnet.lib.dbengine import DBEngine
 import numpy as np
@@ -135,7 +136,7 @@ def epoch_train(model, optimizer, batch_size, sql_data, table_data):
 def predict_test(model, batch_size, sql_data, table_data, output_path):
     model.eval()
     perm = list(range(len(sql_data)))
-    fw = open(output_path,'w')
+    fw = open(output_path,'w', encoding="utf-8")
     for st in tqdm(range(len(sql_data)//batch_size+1)):
         ed = (st+1)*batch_size if (st+1)*batch_size < len(perm) else len(perm)
         st = st * batch_size
@@ -143,7 +144,10 @@ def predict_test(model, batch_size, sql_data, table_data, output_path):
         score = model.forward(q_seq, col_seq, col_num)
         sql_preds = model.gen_query(score, q_seq, col_seq, raw_q_seq)
         for sql_pred in sql_preds:
-            fw.writelines(json.dumps(sql_pred,ensure_ascii=False).encode('utf-8')+'\n')
+            fw.writelines(json.dumps(sql_pred, ensure_ascii=False) + '\n')
+            # fw.writelines(json.dumps(sql_pred, ensure_ascii=False).encode('utf-8'))
+            # fw.writelines('\n')
+
     fw.close()
 
 def epoch_acc(model, batch_size, sql_data, table_data, db_path):

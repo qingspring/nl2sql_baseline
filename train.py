@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import torch
 from sqlnet.utils import *
 from sqlnet.model.sqlnet import SQLNet
@@ -15,6 +16,13 @@ if __name__ == '__main__':
     parser.add_argument('--restore', action='store_true', help='Whether restore trained model')
     parser.add_argument('--logdir', type=str, default='', help='Path of save experiment log')
     args = parser.parse_args()
+
+    args.bs = 128
+    args.epoch = 1
+    args.ca = True
+    args.gpu = True
+    args.toy = True
+    args.train_emb = False
 
     n_word=300
     if args.toy:
@@ -59,7 +67,7 @@ if __name__ == '__main__':
         if dev_acc[1] > best_lf:
             best_lf = dev_acc[1]
             best_lf_idx = i + 1
-            torch.save(model.state_dict(), 'saved_model/best_model')
+            torch.save(model.state_dict(), 'saved_model/best_model_toy')
         if dev_acc[2] > best_ex:
             best_ex = dev_acc[2]
             best_ex_idx = i + 1
